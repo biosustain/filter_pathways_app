@@ -70,7 +70,7 @@ with st.sidebar:
             "Pathway",
             "Reactome",
         ],
-        format_func=lambda name: f"{name}  —  `{UNIPROT_FIELDS[name][0]}`",
+        format_func=lambda name: f"{name}  —  {UNIPROT_FIELDS[name][0]}",
         help="Select one or more annotation fields to retrieve from UniProt.",
     )
 
