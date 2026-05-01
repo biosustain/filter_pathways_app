@@ -20,6 +20,7 @@ from filter_pathways_app.uniprot_fields import (
     fields_to_api_string,
 )
 
+# region Page config
 # ---------------------------------------------------------------------------
 # Page config
 # ---------------------------------------------------------------------------
@@ -35,7 +36,9 @@ st.markdown(
     "Powered by [acore](https://github.com/biosustain/acore) and the "
     "[UniProt REST API](https://www.uniprot.org/help/return_fields)."
 )
+# endregion
 
+# region Sidebar inputs
 # ---------------------------------------------------------------------------
 # Sidebar – inputs
 # ---------------------------------------------------------------------------
@@ -74,7 +77,9 @@ with st.sidebar:
     fetch_btn = st.button(
         "🔍 Fetch annotations", type="primary", width='stretch'
     )
+# endregion
 
+# region Main area filtering
 # ---------------------------------------------------------------------------
 # Main area – filtering
 # ---------------------------------------------------------------------------
@@ -93,7 +98,9 @@ with col2:
     )
     case_sensitive = st.checkbox("Case-sensitive matching", value=False)
     filter_btn = st.button("Apply filter", width='stretch')
+# endregion
 
+# region Session state helpers
 # ---------------------------------------------------------------------------
 # Session state helpers
 # ---------------------------------------------------------------------------
@@ -101,7 +108,9 @@ if "annotations" not in st.session_state:
     st.session_state["annotations"] = None
 if "filtered" not in st.session_state:
     st.session_state["filtered"] = None
+# endregion
 
+# region Fetch logic
 # ---------------------------------------------------------------------------
 # Fetch logic
 # ---------------------------------------------------------------------------
@@ -124,7 +133,9 @@ if fetch_btn:
                 )
             except Exception as exc:
                 st.error(f"Error fetching data from UniProt: {exc}")
+# endregion
 
+# region Filter logic
 # ---------------------------------------------------------------------------
 # Filter logic
 # ---------------------------------------------------------------------------
@@ -143,7 +154,9 @@ if filter_btn:
             st.warning("No annotations matched the given keywords.")
         else:
             st.success(f"Filter matched {len(filtered):,} rows.")
+# endregion
 
+# region Display results
 # ---------------------------------------------------------------------------
 # Display results
 # ---------------------------------------------------------------------------
@@ -200,3 +213,4 @@ with col1:
         )
     else:
         st.info("Enter UniProt IDs and click **Fetch annotations** to start.")
+# endregion
