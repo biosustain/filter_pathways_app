@@ -72,7 +72,7 @@ with st.sidebar:
     )
 
     fetch_btn = st.button(
-        "🔍 Fetch annotations", type="primary", use_container_width=True
+        "🔍 Fetch annotations", type="primary", width='stretch'
     )
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ with col2:
         ),
     )
     case_sensitive = st.checkbox("Case-sensitive matching", value=False)
-    filter_btn = st.button("Apply filter", use_container_width=True)
+    filter_btn = st.button("Apply filter", width='stretch')
 
 # ---------------------------------------------------------------------------
 # Session state helpers
@@ -172,7 +172,7 @@ with col1:
                 .unstack("source")
                 .reset_index()
             )
-            st.dataframe(pivot, use_container_width=True, height=400)
+            st.dataframe(pivot, width='stretch', height=400)
         else:
             st.info("No data to display.")
 
@@ -186,7 +186,7 @@ with col1:
             data=csv_bytes,
             file_name="uniprot_annotations.csv",
             mime="text/csv",
-            use_container_width=True,
+            width='stretch',
         )
 
         # Also offer JSON
@@ -196,7 +196,7 @@ with col1:
             data=json_bytes,
             file_name="uniprot_annotations.json",
             mime="application/json",
-            use_container_width=True,
+            width='stretch',
         )
     else:
         st.info("Enter UniProt IDs and click **Fetch annotations** to start.")
