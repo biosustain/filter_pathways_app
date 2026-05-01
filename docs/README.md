@@ -26,7 +26,7 @@ Options:
 ```bash
 # pwd: docs
 # apidoc
-sphinx-apidoc --force --implicit-namespaces --module-first -o reference ../src/python_package
+sphinx-apidoc --force --implicit-namespaces --module-first -o reference ../src/filter_pathways_app
 # build docs
 sphinx-build -n -W --keep-going -b html ./ ./_build/
 ```

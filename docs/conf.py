@@ -15,10 +15,10 @@ from importlib import metadata
 
 # -- Project information -----------------------------------------------------
 
-project = "python_package"
+project = "filter_pathways_app"
 copyright = "2025, First Last"
 author = "First Last"
-PACKAGE_VERSION = metadata.version("python_package")
+PACKAGE_VERSION = metadata.version("filter_pathways_app")
 version = PACKAGE_VERSION
 release = PACKAGE_VERSION
 
@@ -97,8 +97,8 @@ html_theme = "sphinx_book_theme"
 # html_logo = "_static/logo-wide.svg"
 # html_favicon = "_static/logo-square.svg"
 html_theme_options = {
-    "github_url": "https://github.com/RasmussenLab/python_package",
-    "repository_url": "https://github.com/RasmussenLab/python_package",
+    "github_url": "https://github.com/biosustain/filter_pathways_app",
+    "repository_url": "https://github.com/biosustain/filter_pathways_app",
     "repository_branch": "main",
     "home_page_in_toc": True,
     "path_to_docs": "docs",
@@ -130,7 +130,7 @@ if os.environ.get("READTHEDOCS") == "True":
     from pathlib import Path
 
     PROJECT_ROOT = Path(__file__).parent.parent
-    PACKAGE_ROOT = PROJECT_ROOT / "src" / "python_package"
+    PACKAGE_ROOT = PROJECT_ROOT / "src" / "filter_pathways_app"
 
     def run_apidoc(_):
         from sphinx.ext import apidoc

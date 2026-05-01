@@ -21,16 +21,7 @@ tutorial/tutorial
 :caption: "Reference"
 :hidden: true
 
-reference/python_package
-```
-
-```{toctree}
-:maxdepth: 2
-:caption: "Technical notes"
-:hidden: true
-
-README
-developing
+reference/filter_pathways_app
 ```
 
 ## Indices and tables

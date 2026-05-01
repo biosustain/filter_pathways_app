@@ -1,14 +1,14 @@
 """Tests for the filter_pathways and uniprot_fields modules."""
+
 import pandas as pd
 import pytest
 
-from python_package.filter_pathways import filter_annotations, export_to_csv
-from python_package.uniprot_fields import (
-    UNIPROT_FIELDS,
+from filter_pathways_app.filter_pathways import export_to_csv, filter_annotations
+from filter_pathways_app.uniprot_fields import (
     FIELD_DISPLAY_NAMES,
+    UNIPROT_FIELDS,
     fields_to_api_string,
 )
-
 
 # ---------------------------------------------------------------------------
 # uniprot_fields tests
@@ -38,7 +38,9 @@ def test_all_field_display_names_in_dict():
 def test_uniprot_fields_structure():
     for name, (api_id, description) in UNIPROT_FIELDS.items():
         assert isinstance(api_id, str) and api_id, f"Invalid api_id for {name!r}"
-        assert isinstance(description, str) and description, f"Invalid description for {name!r}"
+        assert (
+            isinstance(description, str) and description
+        ), f"Invalid description for {name!r}"
 
 
 def test_fields_to_api_string_unknown_field():
@@ -75,17 +77,23 @@ def test_filter_annotations_single_keyword(sample_annotations):
 
 
 def test_filter_annotations_multiple_keywords(sample_annotations):
-    result = filter_annotations(sample_annotations, keywords=["apoptosis", "mitochondr"])
+    result = filter_annotations(
+        sample_annotations, keywords=["apoptosis", "mitochondr"]
+    )
     assert len(result) == 2
 
 
 def test_filter_annotations_case_insensitive(sample_annotations):
-    result = filter_annotations(sample_annotations, keywords=["APOPTOSIS"], case_sensitive=False)
+    result = filter_annotations(
+        sample_annotations, keywords=["APOPTOSIS"], case_sensitive=False
+    )
     assert len(result) == 1
 
 
 def test_filter_annotations_case_sensitive_no_match(sample_annotations):
-    result = filter_annotations(sample_annotations, keywords=["APOPTOSIS"], case_sensitive=True)
+    result = filter_annotations(
+        sample_annotations, keywords=["APOPTOSIS"], case_sensitive=True
+    )
     assert len(result) == 0
 
 
@@ -106,7 +114,9 @@ def test_filter_annotations_no_match(sample_annotations):
 
 
 def test_filter_annotations_all_proteins(sample_annotations):
-    result = filter_annotations(sample_annotations, keywords=["cell", "DNA", "Glycolysis"])
+    result = filter_annotations(
+        sample_annotations, keywords=["cell", "DNA", "Glycolysis"]
+    )
     assert set(result["identifier"]) == {"P1", "P2"}
 
 
@@ -131,6 +141,7 @@ def test_export_to_csv_roundtrip():
     df = pd.DataFrame({"identifier": ["P1"], "annotation": ["apoptosis"]})
     data = export_to_csv(df)
     import io
+
     result = pd.read_csv(io.BytesIO(data), encoding="utf-8-sig")
     assert list(result.columns) == ["identifier", "annotation"]
     assert result.iloc[0]["identifier"] == "P1"

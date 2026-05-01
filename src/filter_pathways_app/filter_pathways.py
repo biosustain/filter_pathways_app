@@ -13,7 +13,6 @@ from __future__ import annotations
 import re as _re
 
 import pandas as pd
-
 from acore.io.uniprot import fetch_annotations, process_annotations
 
 re_IGNORECASE = _re.IGNORECASE
@@ -102,12 +101,8 @@ def filter_annotations(
         return annotations.iloc[0:0].copy()
 
     flags = 0 if case_sensitive else re_IGNORECASE
-    pattern = "|".join(
-        _escape(kw) for kw in clean_keywords
-    )
-    mask = annotations["annotation"].str.contains(
-        pattern, flags=flags, na=False
-    )
+    pattern = "|".join(_escape(kw) for kw in clean_keywords)
+    mask = annotations["annotation"].str.contains(pattern, flags=flags, na=False)
     return annotations[mask].copy()
 
 

@@ -2,17 +2,14 @@
 # It is used to indicate that the directory in which it resides is a Python package
 from importlib import metadata
 
-__version__ = metadata.version("python_package")
+__version__ = metadata.version("filter_pathways_app")
 
-from .mockup import hello_world, saved_world
-from .filter_pathways import query_uniprot, filter_annotations, export_to_csv
-from .uniprot_fields import UNIPROT_FIELDS, FIELD_DISPLAY_NAMES, fields_to_api_string
+from .filter_pathways import export_to_csv, filter_annotations, query_uniprot
+from .uniprot_fields import FIELD_DISPLAY_NAMES, UNIPROT_FIELDS, fields_to_api_string
 
 # The __all__ variable is a list of variables which are imported
 # when a user does "from example import *"
 __all__ = [
-    "hello_world",
-    "saved_world",
     "query_uniprot",
     "filter_annotations",
     "export_to_csv",

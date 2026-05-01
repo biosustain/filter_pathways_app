@@ -2,7 +2,7 @@
 [project]
 authors = [{ name = "Henry Webel", email = "heweb@dtu.dk" }]
 description = "A small example package"
-name = "python_package"
+name = "filter_pathways_app"
 # This means: Load the version from the package itself.
 # See the section below: [tools.setuptools.dynamic]
 # dynamic = [
@@ -67,5 +67,5 @@ profile = "black"
 # Script entry points, i.e. command line commands available after installing the package
 # e.g. implemented using argparse
 # Then you can type: `python-package-hello -h` in the terminal
-[project.scripts]
-python-package-hello = "python_package.cli:main"
+# [project.scripts]
+# python-package-hello = "filter_pathways_app.cli:main"

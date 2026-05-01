@@ -9,12 +9,12 @@ Run from the repository root::
 
 import streamlit as st
 
-from python_package.filter_pathways import (
+from filter_pathways_app.filter_pathways import (
     export_to_csv,
     filter_annotations,
     query_uniprot,
 )
-from python_package.uniprot_fields import (
+from filter_pathways_app.uniprot_fields import (
     FIELD_DISPLAY_NAMES,
     UNIPROT_FIELDS,
     fields_to_api_string,
