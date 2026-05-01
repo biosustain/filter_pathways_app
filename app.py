@@ -64,13 +64,13 @@ with st.sidebar:
         "Fields",
         options=FIELD_DISPLAY_NAMES,
         default=[
-            "GO (biological process)",
-            "GO (molecular function)",
-            "GO (cellular component)",
-            "Pathway [CC]",
+            "Gene Ontology (biological process)",
+            "Gene Ontology (molecular function)",
+            "Gene Ontology (cellular component)",
+            "Pathway",
             "Reactome",
         ],
-        format_func=lambda name: f"{name}  —  `{UNIPROT_FIELDS[name][0]}`",
+        format_func=lambda name: f"{name}  —  {UNIPROT_FIELDS[name][0]}",
         help="Select one or more annotation fields to retrieve from UniProt.",
     )
 
