@@ -21,13 +21,23 @@ def test_fields_to_api_string_empty():
 
 
 def test_fields_to_api_string_single():
-    result = fields_to_api_string(["GO (biological process)"])
+    result = fields_to_api_string(["Gene Ontology (biological process)"])
     assert result == "accession,go_p"
 
 
 def test_fields_to_api_string_multiple():
-    result = fields_to_api_string(["GO (biological process)", "Reactome"])
+    result = fields_to_api_string(
+        [
+            "Gene Ontology (biological process)",
+            "Reactome",
+        ]
+    )
     assert result == "accession,go_p,xref_reactome"
+
+
+def test_fields_to_api_string_deduplicates_accession():
+    result = fields_to_api_string(["Entry", "Entry Name"])
+    assert result == "accession,id"
 
 
 def test_all_field_display_names_in_dict():
