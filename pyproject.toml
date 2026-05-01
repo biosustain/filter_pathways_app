@@ -1,14 +1,15 @@
 # ref: https://setuptools.pypa.io/en/stable/userguide/pyproject_config.html
 [project]
-authors = [{ name = "First Last", email = "first.last@gmail.com" }]
+authors = [{ name = "Henry Webel", email = "heweb@dtu.dk" }]
 description = "A small example package"
-name = "python_package"
+name = "filter_pathways_app"
 # This means: Load the version from the package itself.
 # See the section below: [tools.setuptools.dynamic]
-dynamic = [
-  "version", # version is loaded from the package
-  #"dependencies", # add if using requirements.txt
-]
+# dynamic = [
+#   "version", # version is loaded from the package
+#   #"dependencies", # add if using requirements.txt
+# ]
+version = "0.0.1"   
 readme = "README.md"
 requires-python = ">=3.10" # test all higher Python versions
 # These are keywords
@@ -18,18 +19,12 @@ classifiers = [
 ]
 # Also update LICENSE file if you pick another one
 license = "GPL-3.0-or-later" # https://choosealicense.com/licenses/gpl-3.0/
-# # add dependencies here: (use one of the two)
-# dependencies = ["numpy", "pandas", "scipy", "matplotlib", "seaborn"]
-# use requirements.txt instead of pyproject.toml for dependencies
-# https://stackoverflow.com/a/73600610/9684872
-# ! uncomment also dependencies in the dynamic section above
-# [tool.setuptools.dynamic]
-# dependencies = {file = ["requirements.txt"]}
+dependencies = ["acore", "streamlit", "pandas"]
 
 
 [project.urls]
-"Bug Tracker" = "https://github.com/RasmussenLab/python_package/issues"
-"Homepage" = "https://github.com/RasmussenLab/python_package"
+"Bug Tracker" = "https://github.com/biosustain/filter_pathways_app/issues"
+"Homepage" = "https://github.com/biosustain/filter_pathways_app"
 
 [project.optional-dependencies]
 # Optional dependencies to locally build the documentation, also used for 
@@ -72,5 +67,5 @@ profile = "black"
 # Script entry points, i.e. command line commands available after installing the package
 # e.g. implemented using argparse
 # Then you can type: `python-package-hello -h` in the terminal
-[project.scripts]
-python-package-hello = "python_package.cli:main"
+# [project.scripts]
+# python-package-hello = "filter_pathways_app.cli:main"
