@@ -48,7 +48,7 @@ with st.sidebar:
     # UniProt IDs
     ids_text = st.text_area(
         "UniProt accession IDs (one per line)",
-        value="P05067\nP12345",
+        value="B5FVB1\nB5FVB3\nP87200\nQ05493\nQ12724",
         height=150,
         help="Enter UniProt accession IDs, one per line (e.g. P05067).",
     )
