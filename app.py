@@ -16,8 +16,10 @@ from filter_pathways_app.filter_pathways import (
     query_uniprot,
 )
 from filter_pathways_app.kegg_pathways import (
+    fetch_kegg_gene_map,
     gene_map_from_annotations,
     query_kegg_pathways,
+    query_kegg_terms,
 )
 from filter_pathways_app.uniprot_fields import (
     FIELD_DISPLAY_NAMES,
@@ -90,6 +92,24 @@ with st.sidebar:
             "annotation source. Requires extra calls to the KEGG REST API."
         ),
     )
+    include_ko = st.checkbox(
+        "Add KEGG Orthology (KO) terms",
+        value=True,
+        help=(
+            "Resolve each protein's KEGG gene to its KEGG Orthology (KO) terms. "
+            "KO terms group orthologous genes across organisms, enabling "
+            "cross-species lookup. Adds a 'KEGG Orthology (KO)' source."
+        ),
+    )
+    include_ec = st.checkbox(
+        "Add KEGG EC numbers",
+        value=True,
+        help=(
+            "Resolve each protein's KEGG gene to its Enzyme Commission (EC) "
+            "numbers — what KEGG pathway maps are annotated with. Adds a "
+            "'KEGG EC number' source. Non-enzyme proteins yield no EC number."
+        ),
+    )
 
     fetch_btn = st.button("🔍 Fetch annotations", type="primary", width="stretch")
 # endregion
@@ -140,20 +160,42 @@ if fetch_btn:
         with st.spinner(f"Fetching annotations for {len(uniprot_ids)} protein(s)…"):
             try:
                 df = query_uniprot(uniprot_ids, fields=fields_str)
-                if include_kegg:
-                    # Reuse the KEGG cross-references already in ``df`` (when the
-                    # "KEGG" field was fetched) to avoid a second UniProt call;
-                    # fall back to fetching them if that field was not selected.
-                    gene_map = gene_map_from_annotations(df) or None
-                    with st.spinner("Resolving KEGG pathways…"):
-                        kegg_df = query_kegg_pathways(uniprot_ids, gene_map=gene_map)
-                    if kegg_df.empty:
+                if include_kegg or include_ko or include_ec:
+                    # Resolve the UniProt→KEGG-gene map once and share it across
+                    # the pathway/KO/EC lookups. Reuse the KEGG cross-references
+                    # already in ``df`` (when the "KEGG" field was fetched) to
+                    # avoid a second UniProt call; fall back to fetching them if
+                    # that field was not selected.
+                    gene_map = gene_map_from_annotations(df)
+                    if not gene_map:
+                        with st.spinner("Resolving KEGG gene cross-references…"):
+                            gene_map = fetch_kegg_gene_map(uniprot_ids)
+
+                    kegg_frames = []
+                    if include_kegg:
+                        with st.spinner("Resolving KEGG pathways…"):
+                            kegg_frames.append(
+                                query_kegg_pathways(uniprot_ids, gene_map=gene_map)
+                            )
+                    if include_ko or include_ec:
+                        with st.spinner("Resolving KEGG KO / EC terms…"):
+                            kegg_frames.append(
+                                query_kegg_terms(
+                                    uniprot_ids,
+                                    gene_map=gene_map,
+                                    include_ko=include_ko,
+                                    include_ec=include_ec,
+                                )
+                            )
+
+                    kegg_frames = [f for f in kegg_frames if not f.empty]
+                    if kegg_frames:
+                        df = pd.concat([df, *kegg_frames], ignore_index=True)
+                    elif not gene_map:
                         st.info(
-                            "No KEGG pathways found for these proteins "
+                            "No KEGG annotations found for these proteins "
                             "(no KEGG cross-reference in UniProt)."
                         )
-                    else:
-                        df = pd.concat([df, kegg_df], ignore_index=True)
                 st.session_state["annotations"] = df
                 st.session_state["filtered"] = None
                 st.success(

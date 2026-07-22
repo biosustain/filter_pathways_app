@@ -4,14 +4,19 @@ import pandas as pd
 
 import filter_pathways_app.kegg_pathways as kp
 from filter_pathways_app.kegg_pathways import (
+    KEGG_EC_SOURCE,
+    KEGG_KO_SOURCE,
     KEGG_PATHWAY_SOURCE,
     format_pathway_annotation,
+    format_term_annotation,
     gene_map_from_annotations,
+    parse_gene_links,
     parse_gene_pathway_links,
     parse_kegg_gene_ids,
     parse_pathway_names,
     pathway_organism,
     query_kegg_pathways,
+    query_kegg_terms,
 )
 
 # ---------------------------------------------------------------------------
@@ -64,6 +69,28 @@ def test_parse_gene_pathway_links_ignores_blank_lines():
 
 
 # ---------------------------------------------------------------------------
+# parse_gene_links (generic; ko / ec targets)
+# ---------------------------------------------------------------------------
+
+
+def test_parse_gene_links_ko():
+    raw = "hsa:351\tko:K04520\nyli:2912002\tko:K07513\n"
+    assert parse_gene_links(raw, "ko:") == {
+        "hsa:351": ["K04520"],
+        "yli:2912002": ["K07513"],
+    }
+
+
+def test_parse_gene_links_ec_deduplicates():
+    raw = "yli:2912002\tec:2.3.1.16\nyli:2912002\tec:2.3.1.16\n"
+    assert parse_gene_links(raw, "ec:") == {"yli:2912002": ["2.3.1.16"]}
+
+
+def test_parse_gene_links_empty():
+    assert parse_gene_links("", "ko:") == {}
+
+
+# ---------------------------------------------------------------------------
 # parse_pathway_names / helpers
 # ---------------------------------------------------------------------------
 
@@ -92,6 +119,14 @@ def test_format_pathway_annotation():
     )
     # Falls back to the bare ID when no name is available.
     assert format_pathway_annotation("hsa99999", "") == "hsa99999"
+
+
+def test_format_term_annotation():
+    assert format_term_annotation("K04520", "amyloid precursor") == (
+        "amyloid precursor [K04520]"
+    )
+    # EC numbers carry no name -> bare identifier.
+    assert format_term_annotation("2.3.1.16") == "2.3.1.16"
 
 
 # ---------------------------------------------------------------------------
@@ -219,6 +254,57 @@ def test_query_kegg_pathways_no_pathways(monkeypatch):
     monkeypatch.setattr(kp, "fetch_gene_pathways", lambda genes: {})
     result = query_kegg_pathways(["P1"])
     assert result.empty
+
+
+def test_query_kegg_terms_builds_ko_and_ec(monkeypatch):
+    monkeypatch.setattr(
+        kp, "fetch_gene_ko", lambda genes: {"hsa:351": ["K04520"], "yli:1": ["K07513"]}
+    )
+    monkeypatch.setattr(
+        kp,
+        "fetch_ko_descriptions",
+        lambda kos: {"K04520": "amyloid precursor", "K07513": "acetyltransferase"},
+    )
+    monkeypatch.setattr(
+        kp, "fetch_gene_ec", lambda genes: {"yli:1": ["2.3.1.16"]}
+    )
+
+    result = query_kegg_terms(
+        ["P1", "P2"], gene_map={"P1": ["hsa:351"], "P2": ["yli:1"]}
+    )
+
+    assert list(result.columns) == ["identifier", "source", "annotation"]
+    assert set(result["source"]) == {KEGG_KO_SOURCE, KEGG_EC_SOURCE}
+    # P1 (hsa:351) has a KO but no EC number.
+    p1 = result[result["identifier"] == "P1"]
+    assert p1["annotation"].tolist() == ["amyloid precursor [K04520]"]
+    # P2 (yli:1) has both KO and EC.
+    p2 = result[result["identifier"] == "P2"]
+    assert "acetyltransferase [K07513]" in p2["annotation"].tolist()
+    assert "2.3.1.16" in p2["annotation"].tolist()
+
+
+def test_query_kegg_terms_respects_include_flags(monkeypatch):
+    monkeypatch.setattr(kp, "fetch_gene_ko", lambda genes: {"hsa:351": ["K04520"]})
+    monkeypatch.setattr(kp, "fetch_ko_descriptions", lambda kos: {})
+
+    def _no_ec(genes):
+        raise AssertionError("fetch_gene_ec should not be called when include_ec=False")
+
+    monkeypatch.setattr(kp, "fetch_gene_ec", _no_ec)
+
+    result = query_kegg_terms(
+        ["P1"], gene_map={"P1": ["hsa:351"]}, include_ko=True, include_ec=False
+    )
+    assert set(result["source"]) == {KEGG_KO_SOURCE}
+    # No KO description resolved -> bare identifier.
+    assert result.iloc[0]["annotation"] == "K04520"
+
+
+def test_query_kegg_terms_no_gene_map():
+    result = query_kegg_terms([], gene_map={})
+    assert result.empty
+    assert list(result.columns) == ["identifier", "source", "annotation"]
 
 
 def test_query_kegg_pathways_deduplicates_across_genes(monkeypatch):
