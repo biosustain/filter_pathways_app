@@ -35,9 +35,9 @@ def test_fields_to_api_string_multiple():
     assert result == "accession,go_p,xref_reactome"
 
 
-def test_fields_to_api_string_deduplicates_accession():
-    result = fields_to_api_string(["Entry", "Entry Name"])
-    assert result == "accession,id"
+def test_fields_to_api_string_deduplicates_repeated_field():
+    result = fields_to_api_string(["Pathway", "Pathway"])
+    assert result == "accession,cc_pathway"
 
 
 def test_all_field_display_names_in_dict():

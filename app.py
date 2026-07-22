@@ -7,6 +7,7 @@ Run from the repository root::
     streamlit run app.py
 """
 
+import pandas as pd
 import streamlit as st
 
 from filter_pathways_app.filter_pathways import (
@@ -14,6 +15,7 @@ from filter_pathways_app.filter_pathways import (
     filter_annotations,
     query_uniprot,
 )
+from filter_pathways_app.kegg_pathways import query_kegg_pathways
 from filter_pathways_app.uniprot_fields import (
     FIELD_DISPLAY_NAMES,
     UNIPROT_FIELDS,
@@ -74,6 +76,17 @@ with st.sidebar:
         help="Select one or more annotation fields to retrieve from UniProt.",
     )
 
+    st.subheader("KEGG pathways")
+    include_kegg = st.checkbox(
+        "Add KEGG pathways",
+        value=False,
+        help=(
+            "Resolve each protein's KEGG cross-reference to the KEGG pathways "
+            "it participates in (pathway ID and name). Adds a 'KEGG Pathway' "
+            "annotation source. Requires extra calls to the KEGG REST API."
+        ),
+    )
+
     fetch_btn = st.button("🔍 Fetch annotations", type="primary", width="stretch")
 # endregion
 
@@ -123,6 +136,16 @@ if fetch_btn:
         with st.spinner(f"Fetching annotations for {len(uniprot_ids)} protein(s)…"):
             try:
                 df = query_uniprot(uniprot_ids, fields=fields_str)
+                if include_kegg:
+                    with st.spinner("Resolving KEGG pathways…"):
+                        kegg_df = query_kegg_pathways(uniprot_ids)
+                    if kegg_df.empty:
+                        st.info(
+                            "No KEGG pathways found for these proteins "
+                            "(no KEGG cross-reference in UniProt)."
+                        )
+                    else:
+                        df = pd.concat([df, kegg_df], ignore_index=True)
                 st.session_state["annotations"] = df
                 st.session_state["filtered"] = None
                 st.success(

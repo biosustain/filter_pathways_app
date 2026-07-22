@@ -253,7 +253,7 @@ def fields_to_api_string(display_names: list[str]) -> str:
     --------
     >>> fields_to_api_string(["Gene Ontology (biological process)"])
     'accession,go_p'
-    >>> fields_to_api_string(["Entry", "Pathway"])
+    >>> fields_to_api_string(["Pathway", "Pathway"])
     'accession,cc_pathway'
     >>> fields_to_api_string([])
     'accession'
