@@ -23,9 +23,15 @@ ruff check src
 
 ## Basic usage
 
-> ToDo.
-
 ```python
 import filter_pathways_app
 print (filter_pathways_app.__version__)
+```
+
+You can also resolve KEGG KO terms to their common descriptions using acore
+
+```python
+from acore.io.kegg import fetch_kegg_ko_descriptions
+df = fetch_kegg_ko_descriptions(["ko:K03007", "K02143"])
+print(df[["ko_term", "common_description"]])
 ```
