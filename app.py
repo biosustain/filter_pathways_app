@@ -66,6 +66,7 @@ with st.sidebar:
         "Fields",
         options=FIELD_DISPLAY_NAMES,
         default=[
+            "KEGG",
             "Gene Ontology (biological process)",
             "Gene Ontology (molecular function)",
             "Gene Ontology (cellular component)",
@@ -79,7 +80,7 @@ with st.sidebar:
     st.subheader("KEGG pathways")
     include_kegg = st.checkbox(
         "Add KEGG pathways",
-        value=False,
+        value=True,
         help=(
             "Resolve each protein's KEGG cross-reference to the KEGG pathways "
             "it participates in (pathway ID and name). Adds a 'KEGG Pathway' "
