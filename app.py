@@ -15,7 +15,10 @@ from filter_pathways_app.filter_pathways import (
     filter_annotations,
     query_uniprot,
 )
-from filter_pathways_app.kegg_pathways import query_kegg_pathways
+from filter_pathways_app.kegg_pathways import (
+    gene_map_from_annotations,
+    query_kegg_pathways,
+)
 from filter_pathways_app.uniprot_fields import (
     FIELD_DISPLAY_NAMES,
     UNIPROT_FIELDS,
@@ -138,8 +141,12 @@ if fetch_btn:
             try:
                 df = query_uniprot(uniprot_ids, fields=fields_str)
                 if include_kegg:
+                    # Reuse the KEGG cross-references already in ``df`` (when the
+                    # "KEGG" field was fetched) to avoid a second UniProt call;
+                    # fall back to fetching them if that field was not selected.
+                    gene_map = gene_map_from_annotations(df) or None
                     with st.spinner("Resolving KEGG pathways…"):
-                        kegg_df = query_kegg_pathways(uniprot_ids)
+                        kegg_df = query_kegg_pathways(uniprot_ids, gene_map=gene_map)
                     if kegg_df.empty:
                         st.info(
                             "No KEGG pathways found for these proteins "

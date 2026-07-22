@@ -6,6 +6,7 @@ import filter_pathways_app.kegg_pathways as kp
 from filter_pathways_app.kegg_pathways import (
     KEGG_PATHWAY_SOURCE,
     format_pathway_annotation,
+    gene_map_from_annotations,
     parse_gene_pathway_links,
     parse_kegg_gene_ids,
     parse_pathway_names,
@@ -94,6 +95,59 @@ def test_format_pathway_annotation():
 
 
 # ---------------------------------------------------------------------------
+# gene_map_from_annotations (reuse the KEGG xref already in the annotations DF)
+# ---------------------------------------------------------------------------
+
+
+def _annotations_df():
+    return pd.DataFrame(
+        {
+            "identifier": ["Q05493", "Q05493", "B5FVB1", "P87200"],
+            "source": ["KEGG", "Entry", "KEGG", "Pathway"],
+            "annotation": ["yli:2912002;", "Q05493", "yli:7009397;", "some pathway"],
+        }
+    )
+
+
+def test_gene_map_from_annotations_parses_kegg_rows():
+    assert gene_map_from_annotations(_annotations_df()) == {
+        "Q05493": ["yli:2912002"],
+        "B5FVB1": ["yli:7009397"],
+    }
+
+
+def test_gene_map_from_annotations_matches_fetch_kegg_gene_map(monkeypatch):
+    # The DF-derived map must equal what a fresh UniProt fetch would produce.
+    df = _annotations_df()
+
+    def fake_fetch_annotations(ids, fields):
+        return pd.DataFrame(
+            {
+                "From": ["Q05493", "B5FVB1"],
+                "Entry": ["Q05493", "B5FVB1"],
+                "KEGG": ["yli:2912002;", "yli:7009397;"],
+            }
+        )
+
+    monkeypatch.setattr(kp, "fetch_annotations", fake_fetch_annotations)
+    assert gene_map_from_annotations(df) == kp.fetch_kegg_gene_map(
+        ["Q05493", "B5FVB1"]
+    )
+
+
+def test_gene_map_from_annotations_no_kegg_rows():
+    df = pd.DataFrame(
+        {
+            "identifier": ["P1"],
+            "source": ["Entry"],
+            "annotation": ["P1"],
+        }
+    )
+    assert gene_map_from_annotations(df) == {}
+    assert gene_map_from_annotations(df.iloc[0:0]) == {}
+
+
+# ---------------------------------------------------------------------------
 # query_kegg_pathways orchestration (network calls monkeypatched)
 # ---------------------------------------------------------------------------
 
@@ -132,6 +186,25 @@ def test_query_kegg_pathways_builds_long_format(monkeypatch):
         in result[result["identifier"] == "P1"]["annotation"].tolist()
     )
     assert len(result) == 3
+
+
+def test_query_kegg_pathways_uses_supplied_gene_map(monkeypatch):
+    # A provided gene_map must be used as-is, without calling fetch_kegg_gene_map.
+    def _boom(ids):
+        raise AssertionError("fetch_kegg_gene_map should not be called")
+
+    monkeypatch.setattr(kp, "fetch_kegg_gene_map", _boom)
+    monkeypatch.setattr(
+        kp, "fetch_gene_pathways", lambda genes: {"hsa:351": ["hsa00010"]}
+    )
+    monkeypatch.setattr(
+        kp, "fetch_pathway_names", lambda pids: {"hsa00010": "Glycolysis"}
+    )
+
+    result = query_kegg_pathways(["P1"], gene_map={"P1": ["hsa:351"]})
+
+    assert len(result) == 1
+    assert result.iloc[0]["annotation"] == "Glycolysis [hsa00010]"
 
 
 def test_query_kegg_pathways_no_kegg_xref(monkeypatch):

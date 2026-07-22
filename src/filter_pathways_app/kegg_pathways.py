@@ -31,6 +31,10 @@ from acore.io.uniprot import fetch_annotations
 # Source label used for the KEGG pathway rows in the long-format DataFrame.
 KEGG_PATHWAY_SOURCE = "KEGG Pathway"
 
+# Source label of the raw UniProt ``xref_kegg`` rows in the long-format
+# DataFrame (matches the "KEGG" display name in ``UNIPROT_FIELDS``).
+KEGG_XREF_SOURCE = "KEGG"
+
 KEGG_API_BASE_URL = "https://rest.kegg.jp"
 
 # A KEGG gene ID is an organism code (2-4 letters) followed by ":" and a locus,
@@ -212,6 +216,55 @@ def fetch_kegg_gene_map(uniprot_ids: list[str] | pd.Index) -> dict[str, list[str
     return gene_map
 
 
+def gene_map_from_annotations(annotations: pd.DataFrame) -> dict[str, list[str]]:
+    """Build the UniProt→KEGG-gene map from an already-fetched annotations DF.
+
+    When the ``KEGG`` return field was requested, :func:`query_uniprot` already
+    contains rows whose ``annotation`` is the raw ``xref_kegg`` value (e.g.
+    ``"yli:2912002;"``).  Parsing those rows yields the same mapping as
+    :func:`fetch_kegg_gene_map` without a second UniProt request.
+
+    Parameters
+    ----------
+    annotations : pd.DataFrame
+        Long-format DataFrame with ``identifier``, ``source`` and
+        ``annotation`` columns, as returned by
+        :func:`filter_pathways_app.filter_pathways.query_uniprot`.
+
+    Returns
+    -------
+    dict[str, list[str]]
+        Mapping of UniProt accession to its KEGG gene IDs.  Empty when the
+        DataFrame carries no ``KEGG`` cross-reference rows.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     "identifier": ["Q05493", "Q05493", "B5FVB1"],
+    ...     "source": ["KEGG", "Entry", "KEGG"],
+    ...     "annotation": ["yli:2912002;", "Q05493", "yli:7009397;"],
+    ... })
+    >>> gene_map_from_annotations(df)
+    {'Q05493': ['yli:2912002'], 'B5FVB1': ['yli:7009397']}
+    """
+    if annotations is None or annotations.empty:
+        return {}
+    kegg_rows = annotations[annotations["source"] == KEGG_XREF_SOURCE]
+    gene_map: dict[str, list[str]] = {}
+    for identifier, group in kegg_rows.groupby("identifier", sort=False):
+        genes = list(
+            dict.fromkeys(
+                gene
+                for value in group["annotation"]
+                for gene in parse_kegg_gene_ids(value)
+            )
+        )
+        if genes:
+            gene_map[identifier] = genes
+    return gene_map
+
+
 def fetch_gene_pathways(gene_ids: list[str]) -> dict[str, list[str]]:
     """Map KEGG gene IDs to the pathways they participate in.
 
@@ -266,7 +319,10 @@ def fetch_pathway_names(pathway_ids: list[str]) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
-def query_kegg_pathways(uniprot_ids: list[str] | pd.Index) -> pd.DataFrame:
+def query_kegg_pathways(
+    uniprot_ids: list[str] | pd.Index,
+    gene_map: dict[str, list[str]] | None = None,
+) -> pd.DataFrame:
     """Fetch the KEGG pathways associated with the given UniProt proteins.
 
     Combines the three steps (UniProt ``xref_kegg`` → KEGG genes → KEGG pathways
@@ -277,6 +333,12 @@ def query_kegg_pathways(uniprot_ids: list[str] | pd.Index) -> pd.DataFrame:
     ----------
     uniprot_ids : list[str] | pd.Index
         UniProt accession IDs.
+    gene_map : dict[str, list[str]] | None, optional
+        Pre-resolved UniProt→KEGG-gene mapping (e.g. from
+        :func:`gene_map_from_annotations` when the ``KEGG`` field was already
+        fetched).  When provided, the extra UniProt ``xref_kegg`` request is
+        skipped; when ``None`` (the default) it is fetched via
+        :func:`fetch_kegg_gene_map`.
 
     Returns
     -------
@@ -286,7 +348,8 @@ def query_kegg_pathways(uniprot_ids: list[str] | pd.Index) -> pd.DataFrame:
         Empty (with those columns) when no pathways are found.
     """
     columns = ["identifier", "source", "annotation"]
-    gene_map = fetch_kegg_gene_map(uniprot_ids)
+    if gene_map is None:
+        gene_map = fetch_kegg_gene_map(uniprot_ids)
     if not gene_map:
         return pd.DataFrame(columns=columns)
 
